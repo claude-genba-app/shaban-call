@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E3A5F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="車番コール">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>車番コール</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="engine.js"></script>
+<style>
+:root{
+  --accent:#C2410C; --navy:#1E3A5F; --navy2:#2C4D75; --ink:#1B1F24; --sub:#5A6270;
+  --ground:#F4F2EE; --line:#DDD8CF; --ok:#15803D; --warnBg:#FDE7B0; --warnInk:#5C3800; --warnLine:#D99A00;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ground);color:var(--ink);font-family:'Noto Sans JP',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+button{font-family:inherit;cursor:pointer}
+a{color:var(--navy)}
+.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+header.top{background:var(--navy);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 16px;display:flex;flex-direction:column;gap:6px}
+.toprow{display:flex;align-items:center;gap:8px}
+.back{background:none;border:none;color:#fff;width:44px;height:44px;margin-left:-10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ttl{flex:1;font-size:18px;font-weight:900;line-height:1.3;min-width:0}
+.chips{display:flex;gap:8px;flex-wrap:wrap;font-size:13px}
+.chip{background:var(--navy2);border-radius:99px;padding:3px 10px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:44px;height:44px;border-radius:11px;flex-shrink:0;display:block}
+.brandname{font-size:22px;font-weight:900;letter-spacing:.04em}
+.brandsub{font-size:13px;color:#D6DEE8}
+main{flex:1;padding:18px 16px 24px;display:flex;flex-direction:column;gap:14px}
+.h{font-size:15px;font-weight:700}
+.bigbtn{height:96px;border:none;border-radius:16px;background:var(--accent);color:#fff;display:flex;align-items:center;gap:16px;padding:0 22px;text-align:left;width:100%}
+.bigbtn b{font-size:21px;font-weight:900;display:block}
+.bigbtn span{font-size:13px;font-weight:500}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.subbtn{height:88px;border:2px solid var(--navy);border-radius:16px;background:#fff;color:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:16px;font-weight:700}
+.card{background:#fff;border-radius:14px;border:1px solid var(--line)}
+.hist{width:100%;text-align:left;padding:14px 16px;display:flex;align-items:center;gap:12px;color:inherit}
+.hist .t{font-size:15px;font-weight:700}
+.hist .s{font-size:13px;color:var(--sub)}
+.badge{font-size:13px;font-weight:700;border-radius:99px;padding:4px 10px;white-space:nowrap}
+.b-navy{color:var(--navy);background:#E3EAF3}
+.b-warn{color:#7A4A00;background:var(--warnBg)}
+.b-ok{color:#fff;background:var(--ok)}
+.empty{font-size:14px;color:var(--sub);padding:8px 2px;line-height:1.7}
+.progress{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 0}
+.bar{height:8px;width:140px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.warnbox{background:var(--warnBg);color:var(--warnInk);border-radius:12px;padding:10px 12px;display:flex;gap:10px;font-size:13px;line-height:1.5}
+.truck{padding:12px;display:flex;flex-direction:column;gap:8px}
+.truck.warn{border:2px solid var(--warnLine)}
+.trow{display:flex;gap:12px;align-items:center}
+.slot{width:54px;display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+.slot b{font-size:16px;font-weight:900;color:var(--navy);text-align:center;word-break:break-all}
+.slot span{font-size:13px;font-weight:700;color:var(--sub)}
+.info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;background:none;border:none;text-align:left;padding:0;color:inherit}
+.info .n{font-size:16px;font-weight:700}
+.info .n small{font-size:13px;color:var(--sub);font-weight:400;margin-left:6px}
+.info .m{font-size:13px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info .m b{color:var(--ink)}
+.info .tel{font-size:18px;font-weight:700;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.info .tel.none{color:#9A3412;font-size:14px}
+.doneline{font-size:12px;font-weight:700;color:var(--ok);display:flex;align-items:center;gap:4px}
+.crop{width:100%;display:block;border-radius:6px;border:1px solid var(--line);background:#fff}
+.callbtn{width:60px;height:60px;border-radius:99px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;text-decoration:none}
+.callbtn.dim{background:#E3EAF3}
+.callbtn.off{background:#E7E3DC;pointer-events:none}
+footer.bot{padding:12px 16px calc(16px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);display:flex;gap:10px;position:sticky;bottom:0}
+.btn{flex:1;min-height:50px;border-radius:12px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;padding:0 10px}
+.btn-o{border:2px solid var(--navy);background:#fff;color:var(--navy)}
+.btn-f{border:none;background:var(--navy);color:#fff}
+.btn-a{border:none;background:var(--accent);color:#fff;font-size:18px;min-height:60px}
+.btn-g{border:2px solid var(--ok);background:#fff;color:var(--ok)}
+.btn-gf{border:2px solid var(--ok);background:var(--ok);color:#fff}
+.detail{padding:18px;display:flex;flex-direction:column;gap:12px}
+.who{font-size:24px;font-weight:900}
+.co{font-size:15px;color:var(--sub)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cell{background:var(--ground);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cell span{font-size:12px;color:var(--sub)}
+.cell b{font-size:16px;font-weight:700;word-break:break-all}
+label.lb{font-size:13px;font-weight:700;color:var(--sub);margin-top:2px}
+input.telin,input.txtin{height:56px;border:2px solid #C9C2B6;border-radius:12px;padding:0 14px;font-family:inherit;font-size:26px;font-weight:700;letter-spacing:.04em;color:var(--ink);background:#fff;width:100%}
+input.txtin{font-size:17px;height:46px;letter-spacing:0;font-weight:500}
+.note{font-size:13px;color:var(--warnInk);background:var(--warnBg);border-radius:8px;padding:8px 10px;line-height:1.5}
+.dial{height:76px;border-radius:18px;background:var(--accent);color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:12px;font-size:22px;font-weight:900}
+.dial.off{background:#B9B2A7;pointer-events:none}
+.loading{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px 24px;text-align:center}
+.spin{width:56px;height:56px;border-radius:50%;border:6px solid #E3EAF3;border-top-color:var(--accent);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.pbar{width:220px;height:10px;border-radius:99px;background:#E3EAF3;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.err{background:#FDE2DC;color:#7F1D1D;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6}
+.src img,.prev img{width:100%;display:block;border-radius:8px;border:1px solid var(--line);margin-bottom:10px;background:#fff}
+.prev img{max-height:58vh;object-fit:contain}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-size:14px;z-index:9;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.linkbtn{background:none;border:none;color:var(--navy);font-size:13px;font-weight:500;text-decoration:underline;padding:6px 0}
+.tip{font-size:13px;color:var(--sub);line-height:1.7;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<input type="file" id="fCam" accept="image/*" capture="environment" class="hidden">
+<input type="file" id="fAlbum" accept="image/*" multiple class="hidden">
+<input type="file" id="fPdf" accept="application/pdf,.pdf" class="hidden">
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var PDFJS_URL='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+var PDFJS_WORKER='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+var TESS_URL='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+
+var ICON_PHONE=function(color,size){return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"></path></svg>';};
+var ICON_BACK='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>';
+var ICON_CHECK='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>';
+var ICON_WARN='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:1px"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4M12 17h.01"></path></svg>';
+var ICON_ROT_L='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 4v6h6"></path><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"></path></svg>';
+var ICON_ROT_R='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"></path><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path></svg>';
+
+var STORE_KEY='shabanCall.v2';
+var state={view:'home',lists:[],cur:null,idx:0,error:'',loadingMsg:'',pct:-1,pending:null};
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function load(){try{var j=localStorage.getItem(STORE_KEY);if(j)state.lists=JSON.parse(j)||[];}catch(e){state.lists=[];}}
+function save(){
+  var data=state.lists.slice(0,15);
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(data));return;}catch(e){}
+  try{ // 容量オーバー: 古い順に画像を外す
+    for(var i=data.length-1;i>=0;i--){delete data[i].images;data[i].trucks.forEach(function(t){delete t.crop;});
+      try{localStorage.setItem(STORE_KEY,JSON.stringify(data));return;}catch(e2){}}
+  }catch(e3){}
+}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove('on');},1800);}
+function curList(){for(var i=0;i<state.lists.length;i++)if(state.lists[i].id===state.cur)return state.lists[i];return null;}
+function telDigits(t){return String(t||'').replace(/[^\d+]/g,'');}
+function nowHM(){var d=new Date();return d.getHours()+':'+('0'+d.getMinutes()).slice(-2);}
+function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(new Error('部品を読み込めませんでした。電波のよい所でもう一度試してください。'));};document.head.appendChild(s);});}
+
+/* ================= 画面 ================= */
+function logoSvg(){return '<svg class="logo" viewBox="0 0 44 44" aria-hidden="true"><rect width="44" height="44" rx="11" fill="#23272E"/><rect x="6" y="9" width="32" height="16" rx="3" fill="#fff" stroke="#1E3A5F" stroke-width="1.5"/><text x="22" y="21.5" text-anchor="middle" font-size="10" font-weight="900" fill="#1E3A5F" font-family="Noto Sans JP,sans-serif">車番</text><rect x="11" y="29" width="22" height="8" rx="4" fill="#C2410C"/></svg>';}
+
+function render(){
+  var app=document.getElementById('app'),v=state.view,h;
+  if(v==='home')h=viewHome();else if(v==='loading')h=viewLoading();else if(v==='preview')h=viewPreview();
+  else if(v==='list')h=viewList();else if(v==='detail')h=viewDetail();else if(v==='source')h=viewSource();else h=viewHome();
+  app.innerHTML=h;
+}
+
+function viewHome(){
+  var h='<header class="top"><div class="brand">'+logoSvg()+'<div><div class="brandname">車番コール</div><div class="brandsub">車番連絡表から運転手さんに電話</div></div></div></header><main>';
+  if(state.error)h+='<div class="err">'+esc(state.error)+'</div>';
+  h+='<div class="h">車番連絡表を読み込む</div>';
+  h+='<button class="bigbtn" data-act="cam"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg><div><b>写真を撮る</b><span>紙・FAXをその場で撮影</span></div></button>';
+  h+='<div class="grid2"><button class="subbtn" data-act="album"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>アルバムから</button>';
+  h+='<button class="subbtn" data-act="pdf"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M8 13h8M8 17h5"></path></svg>PDFを選ぶ</button></div>';
+  h+='<div class="h" style="margin-top:10px">最近の連絡表</div>';
+  if(!state.lists.length){
+    h+='<div class="empty">まだありません。写真かPDFを読み込むと、ここに並びます。</div>';
+    h+='<div class="tip"><b>うまく読むコツ</b><br>・表を真上から、明るい所で撮る<br>・表だけが画面いっぱいに写るように<br>・文字入りのPDF(メールで届いた物)はほぼ正確に読めます<br>・手書きやFAXは読み間違えることがあるので、黄色の車は確認してください<br><br>記録はこのスマホの中にだけ残ります。外に送られることはありません。</div>';
+  }else{
+    h+='<div style="display:flex;flex-direction:column;gap:10px">';
+    state.lists.forEach(function(l){
+      var n=l.trucks.length,d=l.trucks.filter(function(t){return t.done;}).length,w=l.trucks.filter(function(t){return t.uncertain;}).length;
+      var badge=d===n&&n>0?'<span class="badge b-ok">全車 済</span>':(w?'<span class="badge b-warn">'+n+'台 要確認'+w+'</span>':'<span class="badge b-navy">'+n+'台 済'+d+'</span>');
+      h+='<button class="card hist" data-act="open" data-id="'+esc(l.id)+'"><div style="flex:1;min-width:0"><div class="t">'+esc(l.title||'(工事名なし)')+'</div><div class="s">'+esc([l.date,l.sender,l.kind].filter(Boolean).join(' ・ '))+'</div></div>'+badge+'</button>';
+    });
+    h+='</div>';
+  }
+  h+='</main>';return h;
+}
+
+function viewLoading(){
+  var p=state.pct>=0?'<div class="pbar"><i style="width:'+Math.round(state.pct*100)+'%"></i></div>':'';
+  return '<header class="top"><div class="brand">'+logoSvg()+'<div class="brandname">車番コール</div></div></header><div class="loading"><div class="spin" aria-hidden="true"></div><div style="font-size:18px;font-weight:700">'+esc(state.loadingMsg||'読み取り中…')+'</div>'+p+'<div style="font-size:13px;color:var(--sub);line-height:1.7">スマホの中で読み取っています。<br>写真1枚で20秒〜1分ほどかかります。<br>初回だけ読み取り用データ(約2MB)を取り込みます。</div></div>';
+}
+
+function viewPreview(){
+  var p=state.pending;
+  var h='<header class="top"><div class="toprow"><button class="back" data-act="home" aria-label="やめる">'+ICON_BACK+'</button><div class="ttl">向きを合わせてください</div></div></header><main class="prev">';
+  if(state.error)h+='<div class="err">'+esc(state.error)+'</div>';
+  h+='<div style="font-size:14px;color:var(--sub);line-height:1.6">文字が横書きで正しく読める向きにしてから「読み取る」を押してください。'+(p.canvases.length>1?'(全'+p.canvases.length+'枚とも同じ向きで回します)':'')+'</div>';
+  h+='<img src="'+p.previewUrl+'" alt="読み込んだ表">';
+  h+='<div class="grid2"><button class="btn btn-o" data-act="rotL">'+ICON_ROT_L+'左に回す</button><button class="btn btn-o" data-act="rotR">'+ICON_ROT_R+'右に回す</button></div>';
+  h+='<button class="btn btn-a" data-act="doocr">読み取る</button>';
+  h+='</main>';return h;
+}
+
+function truckTitle(t,i){return t.driver?t.driver+' さん':(t.company||t.info||((i+1)+'台目'));}
+
+function viewList(){
+  var l=curList();if(!l){state.view='home';return viewHome();}
+  var n=l.trucks.length,d=l.trucks.filter(function(t){return t.done;}).length,w=l.trucks.filter(function(t){return t.uncertain;}).length;
+  var h='<header class="top"><div class="toprow"><button class="back" data-act="home" aria-label="戻る">'+ICON_BACK+'</button><div class="ttl">'+esc(l.title||'車番連絡表')+'</div></div><div class="chips">';
+  [l.date,l.sender,l.kind].filter(Boolean).forEach(function(c){h+='<span class="chip">'+esc(c)+'</span>';});
+  h+='</div></header>';
+  h+='<div class="progress"><div class="h" style="font-size:14px">'+n+'台 ・ 電話済み '+d+'</div><div class="bar"><i style="width:'+(n?Math.round(d/n*100):0)+'%"></i></div></div>';
+  h+='<main style="padding-top:12px;gap:10px">';
+  if(w)h+='<div class="warnbox">'+ICON_WARN+'<div><b>'+w+'台 読み取りに自信がありません。</b>黄色の車は、下の切り抜きと番号を見比べてください。</div></div>';
+  if(!n)h+='<div class="err">電話番号が見つかりませんでした。向きを変えるか、表が大きく写るように撮り直してください。「車を手で追加」で入力もできます。</div>';
+  l.trucks.forEach(function(t,i){
+    var hasTel=!!telDigits(t.tel);
+    var meta=[t.kind,t.plate?'車番 <b>'+esc(t.plate)+'</b>':'',t.load].filter(Boolean);
+    h+='<article class="card truck'+(t.uncertain?' warn':'')+'"><div class="trow">';
+    h+='<div class="slot"><b>'+esc(t.slot||(i+1))+'</b><span>'+esc(t.time||'')+'</span></div>';
+    h+='<button class="info" data-act="detail" data-i="'+i+'">';
+    h+='<div class="n">'+esc(truckTitle(t,i))+(t.driver&&t.company?'<small>'+esc(t.company)+'</small>':'')+'</div>';
+    if(meta.length)h+='<div class="m">'+meta.map(function(x){return x.indexOf('<b>')>=0?x:esc(x);}).join(' ・ ')+'</div>';
+    h+=hasTel?'<div class="tel">'+esc(t.tel)+'</div>':'<div class="tel none">電話番号なし(タップで入力)</div>';
+    if(t.done)h+='<div class="doneline">'+ICON_CHECK+' 電話済み '+esc(t.doneAt||'')+'</div>';
+    h+='</button>';
+    h+='<a class="callbtn'+(hasTel?(t.done?' dim':''):' off')+'" href="tel:'+esc(telDigits(t.tel))+'" data-act="dial" data-i="'+i+'" aria-label="'+esc(truckTitle(t,i))+'に発信">'+ICON_PHONE(t.done?'#1E3A5F':'#FFFFFF',28)+'</a>';
+    h+='</div>';
+    if(t.crop&&(t.uncertain||l.ocr))h+='<img class="crop" src="'+t.crop+'" alt="元の表のこの車の行">';
+    h+='</article>';
+  });
+  h+='<button class="btn btn-o" data-act="addtruck" style="flex:none">＋ 車を手で追加</button>';
+  h+='<button class="linkbtn" data-act="delete" style="align-self:center;color:#9A3412">この連絡表を削除</button>';
+  h+='</main><footer class="bot"><button class="btn btn-o" data-act="source">元の表を見る</button><button class="btn btn-f" data-act="copyall">一覧をコピー</button></footer>';
+  return h;
+}
+
+function viewDetail(){
+  var l=curList(),t=l&&l.trucks[state.idx];if(!t){state.view='list';return viewList();}
+  var n=l.trucks.length,hasTel=!!telDigits(t.tel);
+  var h='<header class="top"><div class="toprow"><button class="back" data-act="list" aria-label="一覧に戻る">'+ICON_BACK+'</button><div class="ttl">'+esc([t.slot,t.time?t.time+' 搬入':''].filter(Boolean).join(' ・ ')||'車の詳細')+'</div><div style="font-size:13px;color:#D6DEE8">'+(state.idx+1)+' / '+n+'台</div></div></header>';
+  h+='<main><section class="card detail">';
+  h+='<div><div class="who">'+esc(t.driver?t.driver+' さん':'(運転手名なし)')+'</div><div class="co">'+esc(t.company||'')+'</div></div>';
+  if(t.kind||t.plate||t.load)h+='<div class="grid3"><div class="cell"><span>車種</span><b>'+esc(t.kind||'—')+'</b></div><div class="cell"><span>車番</span><b>'+esc(t.plate||'—')+'</b></div><div class="cell"><span>積載</span><b style="font-size:14px">'+esc(t.load||'—')+'</b></div></div>';
+  if(t.uncertain)h+='<div class="note"><b>要確認：</b>'+esc(t.note||'読み取りに自信がない部分があります。')+'</div>';
+  if(t.crop)h+='<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:var(--sub)">元の表(黄色が読み取った番号)</span><img class="crop" src="'+t.crop+'" alt="元の表のこの車の行"></div>';
+  h+='<label class="lb" for="telin">携帯番号(タップで修正できます)</label><input class="telin" id="telin" type="tel" inputmode="tel" value="'+esc(t.tel||'')+'" placeholder="090-0000-0000">';
+  h+='<label class="lb" for="drvin">運転手名</label><input class="txtin" id="drvin" type="text" value="'+esc(t.driver||'')+'">';
+  h+='<label class="lb" for="coin">運送会社</label><input class="txtin" id="coin" type="text" value="'+esc(t.company||'')+'">';
+  h+='<label class="lb" for="plin">車番</label><input class="txtin" id="plin" type="text" inputmode="numeric" value="'+esc(t.plate||'')+'">';
+  h+='</section>';
+  h+='<a class="dial'+(hasTel?'':' off')+'" id="dialbtn" href="tel:'+esc(telDigits(t.tel))+'" data-act="dial" data-i="'+state.idx+'">'+ICON_PHONE('#FFFFFF',30)+'電話をかける</a>';
+  h+='<div class="grid2">';
+  h+=t.done?'<button class="btn btn-gf" data-act="toggledone">'+ICON_CHECK+'電話済み '+esc(t.doneAt||'')+'</button>':'<button class="btn btn-g" data-act="toggledone">'+ICON_CHECK+'電話済みにする</button>';
+  h+=state.idx<n-1?'<button class="btn btn-o" data-act="next">次の車へ ›</button>':'<button class="btn btn-o" data-act="list">一覧へ戻る</button>';
+  h+='</div>';
+  if(t.uncertain)h+='<button class="btn btn-o" data-act="confirm" style="flex:none">確認した(黄色を消す)</button>';
+  h+='<button class="linkbtn" data-act="deltruck" style="align-self:center;color:#9A3412">この車を一覧から消す</button>';
+  h+='</main>';return h;
+}
+
+function viewSource(){
+  var l=curList(),imgs=(l&&l.images)||[];
+  var h='<header class="top"><div class="toprow"><button class="back" data-act="list" aria-label="一覧に戻る">'+ICON_BACK+'</button><div class="ttl">元の表</div></div></header><main class="src">';
+  if(!imgs.length)h+='<div class="empty">元の画像は保存されていません(スマホの容量の都合で消えた可能性があります)。</div>';
+  imgs.forEach(function(u,i){h+='<img src="'+u+'" alt="元の表 '+(i+1)+'枚目">';});
+  return h+'</main>';
+}
+
+/* ================= 画像まわり ================= */
+function fileToImage(file){return new Promise(function(res,rej){var url=URL.createObjectURL(file),img=new Image();img.onload=function(){res(img);};img.onerror=function(){rej(new Error('画像を開けませんでした'));};img.src=url;});}
+function scaledCanvas(src,w,h,maxSide){var s=Math.min(1,maxSide/Math.max(w,h)),c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(src,0,0,c.width,c.height);return c;}
+function rotateCanvas(c,deg){
+  deg=((deg%360)+360)%360;if(!deg)return c;
+  var o=document.createElement('canvas');o.width=(deg===180)?c.width:c.height;o.height=(deg===180)?c.height:c.width;
+  var g=o.getContext('2d');g.translate(o.width/2,o.height/2);g.rotate(deg*Math.PI/180);g.drawImage(c,-c.width/2,-c.height/2);return o;
+}
+function thumb(c,max,q){return scaledCanvas(c,c.width,c.height,max||1200).toDataURL('image/jpeg',q||0.6);}
+
+// 文字を読みやすくする: 白黒にして表の罫線を消す
+function cleanForOcr(src){
+  var W=src.width,H=src.height,c=document.createElement('canvas');c.width=W;c.height=H;
+  var g=c.getContext('2d');g.drawImage(src,0,0);
+  var id=g.getImageData(0,0,W,H),d=id.data,N=W*H,gray=new Uint8Array(N),i,x,y;
+  for(i=0;i<N;i++)gray[i]=(d[i*4]*299+d[i*4+1]*587+d[i*4+2]*114)/1000|0;
+  // 明るさのムラに強い二値化(周りの平均より暗ければ黒)
+  var integ=new Float64Array((W+1)*(H+1));
+  for(y=0;y<H;y++){var rs=0;for(x=0;x<W;x++){rs+=gray[y*W+x];integ[(y+1)*(W+1)+x+1]=integ[y*(W+1)+x+1]+rs;}}
+  var r=Math.max(8,Math.round(Math.max(W,H)/100)),bin=new Uint8Array(N);
+  for(y=0;y<H;y++){var y0=Math.max(0,y-r),y1=Math.min(H-1,y+r);
+    for(x=0;x<W;x++){var x0=Math.max(0,x-r),x1=Math.min(W-1,x+r),cnt=(x1-x0+1)*(y1-y0+1);
+      var sum=integ[(y1+1)*(W+1)+x1+1]-integ[y0*(W+1)+x1+1]-integ[(y1+1)*(W+1)+x0]+integ[y0*(W+1)+x0];
+      bin[y*W+x]=(gray[y*W+x]<sum/cnt-12&&gray[y*W+x]<200)?1:0;}}
+  // 長い横線・縦線(罫線)を消す
+  var minLen=Math.max(60,Math.round(Math.max(W,H)/40)),mask=new Uint8Array(N),s;
+  for(y=0;y<H;y++){s=-1;for(x=0;x<=W;x++){var on=x<W&&bin[y*W+x];if(on&&s<0)s=x;else if(!on&&s>=0){if(x-s>=minLen)for(var k=s;k<x;k++)mask[y*W+k]=1;s=-1;}}}
+  for(x=0;x<W;x++){s=-1;for(y=0;y<=H;y++){var on2=y<H&&bin[y*W+x];if(on2&&s<0)s=y;else if(!on2&&s>=0){if(y-s>=minLen)for(var k2=s;k2<y;k2++)mask[k2*W+x]=1;s=-1;}}}
+  for(i=0;i<N;i++){var m=mask[i]||(i%W>0&&mask[i-1])||(i%W<W-1&&mask[i+1])||(i>=W&&mask[i-W])||(i<N-W&&mask[i+W]);
+    var v=(bin[i]&&!m)?0:255;d[i*4]=d[i*4+1]=d[i*4+2]=v;d[i*4+3]=255;}
+  g.putImageData(id,0,0);return c;
+}
+
+/* ================= PDF ================= */
+async function ensurePdfjs(){if(!window.pdfjsLib)await loadScript(PDFJS_URL);pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;}
+
+async function readPdf(file){
+  await ensurePdfjs();
+  var pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  var pages=[],canvases=[],hasText=false,n=Math.min(pdf.numPages,6);
+  for(var p=1;p<=n;p++){
+    state.loadingMsg='PDFを開いています('+p+'/'+n+')';render();
+    var page=await pdf.getPage(p),vp0=page.getViewport({scale:1});
+    var scale=Math.min(4,3000/Math.max(vp0.width,vp0.height)),vp=page.getViewport({scale:scale});
+    var c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+    var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
+    await page.render({canvasContext:g,viewport:vp}).promise;
+    canvases.push(c);
+    var tc=await page.getTextContent(),items=[];
+    tc.items.forEach(function(it){
+      if(!it.str||!it.str.trim())return;
+      var tx=it.transform,pt=vp.convertToViewportPoint(tx[4],tx[5]),hh=Math.hypot(tx[2],tx[3])*scale,ww=(it.width||0)*scale;
+      if(hh<=0)return;
+      items.push({str:it.str,x0:pt[0],x1:pt[0]+Math.max(ww,hh*0.5),y0:pt[1]-hh,y1:pt[1]});
+    });
+    if(items.length>5)hasText=true;
+    pages.push({width:c.width,height:c.height,lines:groupLines(items)});
+  }
+  return {pages:pages,canvases:canvases,hasText:hasText};
+}
+
+// 語を行にまとめて、1文字ずつの位置に直す
+function groupLines(items){
+  items.sort(function(a,b){return (a.y0+a.y1)-(b.y0+b.y1);});
+  var lines=[];
+  items.forEach(function(w){
+    var cy=(w.y0+w.y1)/2,h=w.y1-w.y0,L=null;
+    for(var i=lines.length-1;i>=0&&i>=lines.length-4;i--){var o=lines[i],oc=(o.y0+o.y1)/2;if(Math.abs(oc-cy)<Math.max(h,o.y1-o.y0)*0.5){L=o;break;}}
+    if(!L){L={y0:w.y0,y1:w.y1,ws:[],conf:null};lines.push(L);}
+    L.ws.push(w);L.y0=Math.min(L.y0,w.y0);L.y1=Math.max(L.y1,w.y1);
+    if(w.conf!=null)L.confs=(L.confs||[]).concat(w.conf);
+  });
+  return lines.map(function(L){
+    var chars=[];
+    L.ws.sort(function(a,b){return a.x0-b.x0;}).forEach(function(w){
+      var t=w.str,len=t.length,first=true;
+      for(var i=0;i<len;i++){var ch=t.charAt(i);if(/\s/.test(ch)){first=true;continue;}
+        chars.push({ch:ch,x:w.x0+(w.x1-w.x0)*(i+0.5)/len,brk:first});first=false;}
+    });
+    var conf=L.confs?L.confs.reduce(function(a,b){return a+b;},0)/L.confs.length:null;
+    return {y0:L.y0,y1:L.y1,conf:conf,chars:chars};
+  });
+}
+
+/* ================= 文字認識(OCR) ================= */
+var tessWorker=null;
+async function ensureTess(){
+  if(tessWorker)return tessWorker;
+  if(!window.Tesseract)await loadScript(TESS_URL);
+  tessWorker=await Tesseract.createWorker('jpn',1,{logger:function(m){
+    if(m.status&&/loading|initializ/.test(m.status)){state.loadingMsg='読み取り用データを準備中';state.pct=m.progress||0;updateLoading();}
+    else if(m.status==='recognizing text'){state.pct=m.progress||0;updateLoading();}
+  }});
+  await tessWorker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
+  return tessWorker;
+}
+function updateLoading(){if(state.view!=='loading')return;var b=document.querySelector('.pbar i');if(b)b.style.width=Math.round(state.pct*100)+'%';else render();}
+
+function ocrLines(data){
+  var lines=data.lines;
+  if(!lines||!lines.length){lines=[];(data.blocks||[]).forEach(function(b){(b.paragraphs||[]).forEach(function(p){(p.lines||[]).forEach(function(l){lines.push(l);});});});}
+  return lines.map(function(l){
+    var chars=[];
+    (l.words||[]).forEach(function(w){var t=(w.text||'').replace(/\s/g,''),len=t.length;if(!len)return;var b=w.bbox;
+      for(var i=0;i<len;i++)chars.push({ch:t.charAt(i),x:b.x0+(b.x1-b.x0)*(i+0.5)/len,brk:i===0});});
+    return {y0:l.bbox.y0,y1:l.bbox.y1,conf:l.confidence,chars:chars};
+  }).filter(function(l){return l.chars.length;});
+}
+
+async function ocrCanvases(canvases){
+  var w=await ensureTess(),pages=[],cleans=[];
+  for(var i=0;i<canvases.length;i++){
+    state.loadingMsg='表を読み取っています('+(i+1)+'/'+canvases.length+'枚目)';state.pct=0;render();
+    var clean=cleanForOcr(canvases[i]);cleans.push(clean);
+    var r=await w.recognize(clean);
+    pages.push({width:canvases[i].width,height:canvases[i].height,lines:ocrLines(r.data)});
+  }
+  pages.cleans=cleans;
+  return pages;
+}
+
+// 手書きなどで崩れた項目は出さない
+function tidyOcr(t){
+  var src=t.plate+' '+t.driver+' '+t.company;
+  var pd=src.match(/(?:^|[^\d])(\d{1,4})\s*([\u4e00-\u9fff]{2})/); // 「919岡田」のような 車番+名前
+  var plate=pd?pd[1]:((t.plate.match(/(?:^|[^\d])(\d{1,4})(?!\d)/)||[])[1]||'');
+  var drv=pd?pd[2]:((t.driver.match(/[\u4e00-\u9fff]{2,4}/)||[])[0]||'');
+  var kind=(t.kind+' '+t.plate).match(/(\d{1,2}(?:\.\d)?t|TR|トレーラー?|ユニック|ウイング)/i);
+  var co=(t.company.match(/[^\s、。,]{0,6}(運輸|運送|急便|物流|機工|陸運|通運|輸送)/)||[])[0]||'';
+  return Object.assign(t,{plate:plate,kind:kind?kind[1]:'',company:co,driver:drv,load:'',info:''});
+}
+
+// 電話番号の所だけ、数字専用でもう一度読む
+var digitWorker=null;
+async function recheckPhones(trucks,cleanCanvases){
+  try{
+    if(!digitWorker){
+      state.loadingMsg='番号を読み直しています';state.pct=0;render();
+      digitWorker=await Tesseract.createWorker('eng',1,{logger:function(){}});
+      await digitWorker.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:'0123456789-'});
+    }
+    for(var i=0;i<trucks.length;i++){
+      var t=trucks[i],cv=cleanCanvases[t.page];if(!cv||!t.telX||!t.lineY)continue;
+      var lh=Math.max(10,t.lineY[1]-t.lineY[0]),x0=Math.max(0,t.telX[0]-lh*1.2),x1=Math.min(cv.width,t.telX[1]+lh*1.2),y0=Math.max(0,t.lineY[0]-lh*0.4),y1=Math.min(cv.height,t.lineY[1]+lh*0.4);
+      var c=document.createElement('canvas');c.width=Math.round((x1-x0)*2);c.height=Math.round((y1-y0)*2)+40;
+      var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(cv,x0,y0,x1-x0,y1-y0,0,20,c.width,c.height-40);
+      state.pct=(i+1)/trucks.length;updateLoading();
+      var r=await digitWorker.recognize(c);
+      var d=String(r.data.text||'').replace(/[^\d]/g,''),m=d.match(/0[5789]0\d{8}|0\d{9}/);
+      if(!m)continue;
+      var alt=ShabanEngine.fmtTel(m[0]);
+      if(alt===t.tel){ if(t.note.indexOf('確かさ')>=0&&t.note.indexOf('読み替え')<0&&t.note.indexOf('桁')<0){t.uncertain=false;t.note='';} }
+      else{ var first=t.tel; t.tel=alt; t.uncertain=true; t.note=(t.note?t.note+'。':'')+'番号の読み方が2通りありました（'+alt+' / '+first+'）。上の候補にしています'; }
+    }
+  }catch(e){ /* 読み直しは失敗しても続ける */ }
+}
+
+function makeCrop(canvas,t){
+  if(!canvas||!t.band)return '';
+  var W=canvas.width,lh=Math.max(10,(t.lineY1-t.lineY0)||(t.band.y1-t.band.y0));
+  var pad=Math.max(12,lh*0.6),y0=Math.max(0,t.band.y0-pad),y1=Math.min(canvas.height,t.band.y1+pad);
+  // 電話番号を右寄りに入れて、その左側(名前・車番など)が見える幅で切る
+  var cw=W,cx0=0;
+  if(t.telX){cw=Math.min(W,Math.max(W*0.55,(y1-y0)*5));var right=Math.min(W,t.telX[1]+lh*3);cx0=Math.max(0,right-cw);cw=Math.min(cw,W-cx0);}
+  var s=Math.min(2,900/cw),c=document.createElement('canvas');c.width=Math.round(cw*s);c.height=Math.max(1,Math.round((y1-y0)*s));
+  var g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(canvas,cx0,y0,cw,y1-y0,0,0,c.width,c.height);
+  if(t.telX){g.fillStyle='rgba(250,204,21,0.35)';g.fillRect((t.telX[0]-lh*0.6-cx0)*s,(t.lineY0-y0-lh*0.2)*s,(t.telX[1]-t.telX[0]+lh*1.2)*s,lh*1.4*s);}
+  return c.toDataURL('image/jpeg',0.7);
+}
+
+/* ================= 読み込みの流れ ================= */
+async function startFiles(files,kind){
+  state.error='';if(!files.length)return;
+  state.view='loading';state.pct=-1;state.loadingMsg=kind==='pdf'?'PDFを開いています':'写真を準備しています';render();
+  try{
+    if(kind==='pdf'){
+      var r=await readPdf(files[0]);
+      if(r.hasText){
+        var res=ShabanEngine.extract(r.pages);
+        if(res.trucks.length){finish(res,r.canvases,'PDF',false);return;}
+      }
+      state.pending={canvases:r.canvases,kind:'PDF(画像)',rot:0};
+    }else{
+      var cs=[];
+      for(var i=0;i<files.length&&i<6;i++){var img=await fileToImage(files[i]);cs.push(scaledCanvas(img,img.naturalWidth,img.naturalHeight,3000));}
+      state.pending={canvases:cs,kind:'写真',rot:0};
+    }
+    state.pending.previewUrl=thumb(state.pending.canvases[0],1000,0.7);
+    state.view='preview';render();
+  }catch(e){fail(e);}
+}
+
+async function runOcr(){
+  var p=state.pending;state.error='';
+  state.view='loading';state.pct=0;state.loadingMsg='準備しています';render();
+  try{
+    var cs=p.canvases.map(function(c){return rotateCanvas(c,p.rot);});
+    var pages=await ocrCanvases(cs);
+    var res=ShabanEngine.extract(pages);
+    res.trucks.forEach(tidyOcr);
+    await recheckPhones(res.trucks,pages.cleans);
+    if(!res.trucks.length){state.error='電話番号が見つかりませんでした。向きが合っているか確認するか、表が大きく写るように撮り直してください。';state.view='preview';render();return;}
+    finish(res,cs,p.kind,true);
+  }catch(e){fail(e);}
+}
+
+function finish(res,canvases,kind,ocr){
+  // 同じ番号が何度も出たら1台にまとめる(複数ページ・重複行対策)
+  var seen={};res.trucks=res.trucks.filter(function(t){var k=telDigits(t.tel);if(!k)return true;if(seen[k])return false;seen[k]=1;return true;});
+  // 各車の行の位置(電話番号のある行)を覚えて切り抜きを作る
+  res.trucks.forEach(function(t){
+    var pg=canvases[t.page];
+    t.lineY0=t.lineY?t.lineY[0]:t.band.y0;t.lineY1=t.lineY?t.lineY[1]:t.band.y1;
+    t.crop=makeCrop(pg,t);
+    delete t.band;delete t.telX;delete t.lineY;delete t.lineY0;delete t.lineY1;
+    t.done=false;t.doneAt='';
+  });
+  var id='L'+Date.now();
+  var list={id:id,title:res.title,date:res.date,sender:res.sender,kind:kind,ocr:ocr,trucks:res.trucks,images:canvases.map(function(c){return thumb(c,1200,0.6);}),created:Date.now()};
+  state.lists.unshift(list);save();state.pending=null;
+  state.cur=id;state.view='list';render();
+}
+
+function fail(e){state.error='読み取れませんでした：'+((e&&e.message)||'不明なエラー');state.view='home';state.pending=null;render();}
+
+/* ================= 操作 ================= */
+function saveDetailInputs(){
+  var l=curList(),t=l&&l.trucks[state.idx];if(!t)return;
+  var g=function(id){var e=document.getElementById(id);return e?e.value.trim():null;};
+  var v;if((v=g('telin'))!==null)t.tel=v;if((v=g('drvin'))!==null)t.driver=v;if((v=g('coin'))!==null)t.company=v;if((v=g('plin'))!==null)t.plate=v;
+  save();
+}
+document.addEventListener('input',function(e){
+  if(e.target.id==='telin'){var a=document.getElementById('dialbtn'),d=telDigits(e.target.value);if(a){a.setAttribute('href','tel:'+d);a.classList.toggle('off',!d);}}
+});
+document.addEventListener('change',function(e){if(/^(telin|drvin|coin|plin)$/.test(e.target.id))saveDetailInputs();});
+
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-act]');if(!el)return;
+  var act=el.getAttribute('data-act'),l=curList(),t;
+  switch(act){
+    case 'cam':document.getElementById('fCam').click();break;
+    case 'album':document.getElementById('fAlbum').click();break;
+    case 'pdf':document.getElementById('fPdf').click();break;
+    case 'home':state.view='home';state.error='';state.pending=null;render();window.scrollTo(0,0);break;
+    case 'open':state.cur=el.getAttribute('data-id');state.view='list';render();window.scrollTo(0,0);break;
+    case 'list':if(state.view==='detail')saveDetailInputs();state.view='list';render();break;
+    case 'detail':state.idx=+el.getAttribute('data-i');state.view='detail';render();window.scrollTo(0,0);break;
+    case 'source':state.view='source';render();window.scrollTo(0,0);break;
+    case 'rotL':state.pending.rot=(state.pending.rot+270)%360;state.pending.previewUrl=thumb(rotateCanvas(state.pending.canvases[0],state.pending.rot),1000,0.7);state.error='';render();break;
+    case 'rotR':state.pending.rot=(state.pending.rot+90)%360;state.pending.previewUrl=thumb(rotateCanvas(state.pending.canvases[0],state.pending.rot),1000,0.7);state.error='';render();break;
+    case 'doocr':runOcr();break;
+    case 'next':saveDetailInputs();state.idx++;render();window.scrollTo(0,0);break;
+    case 'confirm':saveDetailInputs();l.trucks[state.idx].uncertain=false;save();render();break;
+    case 'toggledone':saveDetailInputs();t=l.trucks[state.idx];t.done=!t.done;t.doneAt=t.done?nowHM():'';save();render();break;
+    case 'dial':
+      if(state.view==='detail')saveDetailInputs();
+      t=l&&l.trucks[+el.getAttribute('data-i')];if(t&&telDigits(t.tel)){t.lastDial=nowHM();save();}
+      break; // tel: リンクがそのまま電話アプリを開く
+    case 'addtruck':l.trucks.push({slot:'',time:'',company:'',kind:'',plate:'',driver:'',tel:'',load:'',info:'',uncertain:false,note:'',done:false,doneAt:''});save();state.idx=l.trucks.length-1;state.view='detail';render();window.scrollTo(0,0);break;
+    case 'deltruck':
+      if(el.getAttribute('data-sure')==='1'){l.trucks.splice(state.idx,1);save();state.view='list';render();}
+      else{el.setAttribute('data-sure','1');el.textContent='もう一度タップで消す';}
+      break;
+    case 'copyall':
+      copyText([l.title,l.date,l.sender].filter(Boolean).join(' ')+'\n'+l.trucks.map(function(t,i){return [t.slot||(i+1),t.time,t.company,t.kind,t.plate,t.driver,t.tel,t.load,t.done?'済':''].filter(Boolean).join(' ');}).join('\n'),'一覧をコピーしました');break;
+    case 'delete':
+      if(el.getAttribute('data-sure')==='1'){state.lists=state.lists.filter(function(x){return x.id!==state.cur;});save();state.view='home';render();}
+      else{el.setAttribute('data-sure','1');el.textContent='もう一度タップで削除';}
+      break;
+  }
+});
+function copyText(s,msg){
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){toast(msg);},function(){toast('コピーできませんでした');});}
+  else toast('コピーできませんでした');
+}
+['fCam','fAlbum','fPdf'].forEach(function(id){
+  document.getElementById(id).addEventListener('change',function(e){var files=Array.prototype.slice.call(e.target.files||[]);e.target.value='';startFiles(files,id==='fPdf'?'pdf':'photo');});
+});
+
+load();render();
+})();
+</script>
+</body>
+</html>
