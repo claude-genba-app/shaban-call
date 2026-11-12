@@ -129,6 +129,9 @@ var ICON_ROT_L='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stro
 var ICON_ROT_R='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"></path><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"></path></svg>';
 
 var STORE_KEY='shabanCall.v2';
+var installEvt=null;
+function isIOS(){return /iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function isStandalone(){try{return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch(e){return false;}}
 var state={view:'home',lists:[],cur:null,idx:0,error:'',loadingMsg:'',pct:-1,pending:null};
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -160,6 +163,9 @@ function render(){
 function viewHome(){
   var h='<header class="top"><div class="brand">'+logoSvg()+'<div><div class="brandname">車番コール</div><div class="brandsub">車番連絡表から運転手さんに電話</div></div></div></header><main>';
   if(state.error)h+='<div class="err">'+esc(state.error)+'</div>';
+  if(installEvt&&!isStandalone())h+='<button class="btn btn-f" data-act="install" style="flex:none;min-height:56px">'+'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg>このスマホにアプリとして入れる</button>';
+  else if(!isStandalone()&&isIOS())h+='<div class="tip" style="font-size:12px">iPhoneでアプリとして入れるには：<b>Safari</b>でこのページを開き、下の共有ボタン(□に↑)→「ホーム画面に追加」</div>';
+  else if(!isStandalone())h+='<div class="tip" style="font-size:12px">アプリとして入れるには：Chromeの右上「︙」→「アプリをインストール」(または「ホーム画面に追加」)</div>';
   h+='<div class="h">車番連絡表を読み込む</div>';
   h+='<button class="bigbtn" data-act="cam"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg><div><b>写真を撮る</b><span>紙・FAXをその場で撮影</span></div></button>';
   h+='<div class="grid2"><button class="subbtn" data-act="album"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>アルバムから</button>';
@@ -167,7 +173,7 @@ function viewHome(){
   h+='<div class="h" style="margin-top:10px">最近の連絡表</div>';
   if(!state.lists.length){
     h+='<div class="empty">まだありません。写真かPDFを読み込むと、ここに並びます。</div>';
-    h+='<div class="tip"><b>うまく読むコツ</b><br>・表を真上から、明るい所で撮る<br>・表だけが画面いっぱいに写るように<br>・文字入りのPDF(メールで届いた物)はほぼ正確に読めます<br>・手書きやFAXは読み間違えることがあるので、黄色の車は確認してください<br><br>記録はこのスマホの中にだけ残ります。外に送られることはありません。</div>';
+    h+='<div class="tip"><b>うまく読むコツ</b><br>・表を真上から、明るい所で撮る<br>・表だけが画面いっぱいに写るように<br>'+(isIOS()?'・LINEで届いたPDFは、LINEで開いて共有→「"ファイル"に保存」→このアプリの「PDFを選ぶ」で開けます':'・LINEで届いたPDFや写真は、LINEの「共有」→「車番コール」で開けます(アプリとして入れた後)')+'<br>・文字入りのPDF(メールで届いた物)はほぼ正確に読めます<br>・手書きやFAXは読み間違えることがあるので、黄色の車は確認してください<br><br>記録はこのスマホの中にだけ残ります。外に送られることはありません。</div>';
   }else{
     h+='<div style="display:flex;flex-direction:column;gap:10px">';
     state.lists.forEach(function(l){
@@ -503,6 +509,9 @@ document.addEventListener('click',function(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var act=el.getAttribute('data-act'),l=curList(),t;
   switch(act){
+    case 'install':
+      if(installEvt){installEvt.prompt();installEvt.userChoice.then(function(c){if(c&&c.outcome==='accepted')toast('ホーム画面に追加しました');installEvt=null;if(state.view==='home')render();});}
+      break;
     case 'cam':document.getElementById('fCam').click();break;
     case 'album':document.getElementById('fAlbum').click();break;
     case 'pdf':document.getElementById('fPdf').click();break;
@@ -542,7 +551,23 @@ function copyText(s,msg){
   document.getElementById(id).addEventListener('change',function(e){var files=Array.prototype.slice.call(e.target.files||[]);e.target.value='';startFiles(files,id==='fPdf'?'pdf':'photo');});
 });
 
-load();render();
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();installEvt=e;if(state.view==='home')render();});
+window.addEventListener('appinstalled',function(){installEvt=null;if(state.view==='home')render();});
+if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+async function takeShared(){
+  if(!/[?&]shared=1/.test(location.search))return;
+  try{history.replaceState(null,'',location.pathname);}catch(e){}
+  try{
+    var c=await caches.open('shaban-call-shared'),keys=await c.keys(),files=[];
+    for(var i=0;i<keys.length;i++){var r=await c.match(keys[i]);if(!r)continue;var b=await r.blob();
+      var n=decodeURIComponent(r.headers.get('x-file-name')||('file'+i));files.push(new File([b],n,{type:b.type||r.headers.get('content-type')||''}));await c.delete(keys[i]);}
+    if(!files.length){state.error='共有されたファイルを受け取れませんでした。もう一度共有してください。';render();return;}
+    var pdf=files.filter(function(f){return /pdf/i.test(f.type)||/\.pdf$/i.test(f.name);});
+    if(pdf.length)startFiles([pdf[0]],'pdf');
+    else startFiles(files.filter(function(f){return /^image\//.test(f.type)||/\.(jpe?g|png|webp|heic)$/i.test(f.name);}),'photo');
+  }catch(e){state.error='共有されたファイルを開けませんでした：'+(e&&e.message||'');render();}
+}
+load();render();takeShared();
 })();
 </script>
 </body>
