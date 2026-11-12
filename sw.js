@@ -1,5 +1,6 @@
 /* 車番コール: 電波がなくても開けるように、画面と部品をスマホに保存する */
-var VERSION = 'shaban-call-v3';
+var VERSION = 'shaban-call-v4';
+var SHARE_CACHE = 'shaban-call-shared';
 var APP_FILES = [
   './', './index.html', './engine.js', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'
@@ -12,14 +13,35 @@ self.addEventListener('install', function (e) {
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== VERSION; }).map(function (k) { return caches.delete(k); }));
+    return Promise.all(keys.filter(function (k) { return k !== VERSION && k !== SHARE_CACHE; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 
 self.addEventListener('fetch', function (e) {
   var req = e.request;
-  if (req.method !== 'GET') return;
   var url = new URL(req.url);
+
+  // LINEなどの「共有」から届いたPDF・写真を受け取って、アプリに渡す
+  if (req.method === 'POST' && /\/share-target\/?$/.test(url.pathname)) {
+    e.respondWith((async function () {
+      try {
+        var fd = await req.formData();
+        var files = fd.getAll('file').filter(function (f) { return f && f.size; });
+        var c = await caches.open(SHARE_CACHE);
+        var old = await c.keys(); await Promise.all(old.map(function (k) { return c.delete(k); }));
+        for (var i = 0; i < files.length && i < 6; i++) {
+          await c.put(new Request('./shared/' + i), new Response(files[i], { headers: {
+            'content-type': files[i].type || 'application/octet-stream',
+            'x-file-name': encodeURIComponent(files[i].name || ('file' + i))
+          } }));
+        }
+      } catch (err) {}
+      return Response.redirect(new URL('./index.html?shared=1', self.registration.scope).href, 303);
+    })());
+    return;
+  }
+
+  if (req.method !== 'GET') return;
 
   // アプリ本体: まずネット(最新版)、つながらなければ保存分
   if (url.origin === self.location.origin) {
