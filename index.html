@@ -396,7 +396,7 @@ function tidyOcr(t){
   var plate=pd?pd[1]:((t.plate.match(/(?:^|[^\d])(\d{1,4})(?!\d)/)||[])[1]||'');
   var drv=pd?pd[2]:((t.driver.match(/[\u4e00-\u9fff]{2,4}/)||[])[0]||'');
   var kind=(t.kind+' '+t.plate).match(/(\d{1,2}(?:\.\d)?t|TR|トレーラー?|ユニック|ウイング)/i);
-  var co=(t.company.match(/[^\s、。,]{0,6}(運輸|運送|急便|物流|機工|陸運|通運|輸送)/)||[])[0]||'';
+  var co=((t.kind+t.company).replace(/\s/g,'').match(/[\u3040-\u30ff\u3400-\u9fff]{0,6}(運輸|運送|急便|物流|機工|陸運|通運|輸送)/)||[])[0]||'';
   return Object.assign(t,{plate:plate,kind:kind?kind[1]:'',company:co,driver:drv,load:'',info:''});
 }
 
